@@ -1,73 +1,41 @@
-# Welcome to your Lovable project
+# 🎄 Sopa de Letras de Natal - Edição 3D Ballpit
 
-## Project info
+Uma experiência web interativa e festiva de Sopa de Letras (Caça-Palavras), com um fundo 3D dinâmico, interface em vidro (Glassmorphism) e um sistema de pistas misteriosas.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## ✨ Funcionalidades
 
-## How can I edit this code?
+* **Fundo 3D Interativo:** Utiliza **Three.js** para criar uma piscina de bolas de Natal flutuantes que reagem ao movimento do rato (física de colisão e repulsão).
+* **Interface Glassmorphism:** Painéis com efeito de vidro fosco, inspirado em componentes modernos de UI.
+* **Modo Mistério:** As palavras não são reveladas inicialmente. O jogador vê uma **dica/frase** e deve encontrar a palavra correspondente na grelha.
+* **Animações Suaves:** Texto com gradiente animado e efeitos visuais ao encontrar palavras.
+* **Responsivo:** Funciona em Desktop (clique e arraste) e Mobile (toque e arraste).
+* **Sem Dependências de Build:** É um ficheiro HTML único, pronto a executar.
 
-There are several ways of editing your application.
+## 🚀 Como Executar
 
-**Use Lovable**
+Não é necessária instalação de `npm` ou servidores complexos.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+1.  **Clonar ou Descarregar** este repositório.
+2.  Abrir o ficheiro `index.html` em qualquer navegador moderno (Chrome, Edge, Firefox, Safari).
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Tecnologias Usadas
 
-**Use your preferred IDE**
+* **HTML5 & CSS3** (Variáveis CSS, Grid Layout, Keyframe Animations).
+* **JavaScript (Vanilla)** (Lógica do jogo e manipulação do DOM).
+* **Three.js (r128)** (Renderização do fundo 3D via CDN).
+* **Fontes:** Google Fonts (Noto Serif & Noto Sans).
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## ⚙️ Como Personalizar
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Podes alterar facilmente as palavras e as dicas editando o objeto `gameData` dentro da tag `<script>` no ficheiro `index.html`.
 
-Follow these steps:
+1.  Abra o `index.html` num editor de texto (VS Code, Notepad++, etc).
+2.  Procure pela variável `const gameData`.
+3.  Altere as palavras (`word`) e as dicas (`hint`):
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```javascript
+const gameData = [
+    { word: "SEU_PALAVRA", hint: "A sua dica aqui." },
+    { word: "OUTRA", hint: "Outra dica." },
+    // ... adicione mais linhas conforme necessário
+];
