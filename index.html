@@ -1,26 +1,776 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sopa de Letras de Natal - Ballpit Flutuante</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        /* =========================================
+           1. VARIÁVEIS GLOBAIS (CORES & ESTILOS)
+           ========================================= */
+        :root {
+            --text-dark: #4d2121;
+            --text-gold: #e6c385;
+            --text-gray: #333333;
+            --christmas-green: #bb2626; /* Um vermelho natalício */
+            --light-green: #c8e6c9;
+            --highlight: rgba(73, 212, 55, 0.4);
+            --border-radius: 12px;
+            --card-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
 
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+        /* =========================================
+           2. RESET & LAYOUT BÁSICO
+           ========================================= */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            color: var(--text-dark);
+            font-family: 'Noto Sans', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background: transparent; /* Permite ver o canvas 3D atrás */
+        }
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+        /* =========================================
+           3. FUNDO 3D (CANVAS)
+           ========================================= */
+        #ballpit-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Fica atrás de todo o conteúdo */
+            background: radial-gradient(circle at center, #dacaa1 0%, #000000 200%);
+        }
+
+        /* =========================================
+           4. EFEITO VIDRO (GLASSMORPHISM)
+           ========================================= */
+        .glass-surface {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px) saturate(100%);
+            -webkit-backdrop-filter: blur(12px) saturate(100%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+        }
+
+        /* =========================================
+           5. CABEÇALHO & TIPOGRAFIA
+           ========================================= */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            z-index: 2;
+        }
+
+        .header-icons {
+            font-size: 1.5rem;
+            color: var(--text-gold);
+            margin-bottom: 5px;
+        }
+
+        h1 {
+            font-family: 'Noto Serif', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #fdf5e6;
+            margin: 0;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            font-family: 'Noto Serif', serif;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        /* Animação de Texto Gradiente */
+        .gradient-text {
+            background-image: linear-gradient(to right, #d43737, #ffdf87, #2e7d32, #d43737);
+            background-size: 200% auto;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            animation: gradient-animation 3s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes gradient-animation {
+            to { background-position: 200% center; }
+        }
+
+        .instructions-box {
+            padding: 15px 20px;
+            display: inline-block;
+            font-size: 0.95rem;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            max-width: 600px;
+        }
+
+        /* =========================================
+           6. ÁREA DO JOGO (LAYOUT)
+           ========================================= */
+        .game-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            max-width: 950px;
+            width: 100%;
+            z-index: 2;
+        }
+
+        /* =========================================
+           7. GRELHA DE LETRAS
+           ========================================= */
+        #grid-container {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 5px;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: var(--text-dark);
+            font-family: 'Noto Sans', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cell[data-letter=" "] {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-color: transparent;
+        }
+
+        .cell:hover {
+            background-color: var(--highlight);
+            transform: scale(1.1);
+        }
+
+        .cell.selected {
+            background-color: var(--highlight);
+            border-color: var(--text-gold);
+            transform: scale(0.95);
+        }
+
+        .cell.found {
+            background-color: var(--christmas-green);
+            color: #fff;
+            border-color: transparent;
+            animation: pop 0.4s ease;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* =========================================
+           8. BARRA LATERAL (LISTA & PROGRESSO)
+           ========================================= */
+        .sidebar {
+            padding: 25px;
+            min-width: 280px;
+        }
+
+        .sidebar h3 {
+            font-family: 'Noto Serif', serif;
+            font-size: 1.2rem;
+            margin: 0 0 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-dark);
+        }
+
+        .word-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .word-item {
+            display: flex;
+            align-items: flex-start;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            line-height: 1.4;
+        }
+
+        .word-item::before {
+            content: '❓';
+            margin-right: 10px;
+            font-size: 1rem;
+            min-width: 20px;
+        }
+
+        .word-item.found {
+            text-decoration: none;
+            color: var(--christmas-green);
+            font-weight: 800;
+            font-size: 1.1rem;
+            transform: translateX(5px);
+        }
+
+        .word-item.found::before {
+            content: '✅';
+            color: var(--christmas-green);
+        }
+
+        /* Barra de Progresso */
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--christmas-green);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Caixa de Vitória */
+        .win-box {
+            background: rgba(200, 230, 201, 0.9);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: slideUp 0.5s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Botão */
+        .restart-btn {
+            width: 100%;
+            background: #e57373;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-family: 'Noto Sans', sans-serif;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .restart-btn:hover {
+            background: #d32f2f;
+            transform: scale(1.02);
+        }
+
+        /* =========================================
+           9. RESPONSIVIDADE (MOBILE)
+           ========================================= */
+        @media (max-width: 850px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .sidebar {
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            h1 { font-size: 2.5rem; }
+            .cell { width: 25px; height: 25px; font-size: 0.85rem; }
+            .subtitle { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ballpit-canvas"></div>
+
+    <div class="header">
+        <div class="header-icons">🎄❤️🎄</div>
+        <h1>Sopa de Letras</h1>
+        
+        <div class="subtitle"><strong class="gradient-text">de Natal</strong></div>
+        
+        <div class="instructions-box glass-surface">
+            <strong style="color: #bb2626;">Como jogar:</strong> Lê a dica na lista e encontra a palavra correspondente na grelha.
+            <br>
+            As palavras podem estar na horizontal, vertical ou diagonal. Boa sorte!
+        </div>
+    </div>
+
+    <div class="game-container">
+        
+        <div id="grid-container" class="glass-surface"></div>
+
+        <div class="sidebar glass-surface">
+            <h3>🎁 Pistas Secretas</h3>
+            <div class="word-list" id="word-list"></div>
+
+            <div class="win-box" id="win-box" style="display: none;">
+                <span style="font-size: 1.5rem; color: #e57373;">❤️</span>
+                <h4>Feliz Natal!</h4>
+                <p>Com muito amor ❤️</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gridSize = 12; 
+        
+        // Dados do Jogo: Palavra + Dica
+        const gameData = [
+            { word: "SOFÁ", hint: "Onde a família senta os rabinhos quando quer descansar." },
+            { word: "ÁRVORE", hint: "É verde, tem luzes e uma estrela no topo..." },
+            { word: "PAI NATAL", hint: "Veste vermelho e traz presentes :)" },
+            { word: "FRIGORÍFICO", hint: "Aqui a comida não estraga tão rápido. Eu sou o..." },
+            { word: "MICROONDAS", hint: "Onde costumas aquecer a comida? Será que aqueceu bem a tua prenda?" },
+            { word: "ÍMANES", hint: "Há quem nos use para segurar papéis, mas gostamos mais de dizer que somos uma lembrança ;)" }
+        ];
+
+        let grid = [];
+        let isSelecting = false;
+        let selectedCells = [];
+        let foundWordsCount = 0;
+
+        // Referências DOM
+        const gridContainer = document.getElementById('grid-container');
+        const wordListContainer = document.getElementById('word-list');
+        const winBox = document.getElementById('win-box');
+        const progressCount = document.getElementById('progress-count');
+        const progressFill = document.getElementById('progress-fill');
+
+        // Inicialização
+        function initGame() {
+            createEmptyGrid();
+            placeWords();
+            fillEmptySpaces();
+            renderGrid();
+            renderWordList();
+            updateProgress();
+        }
+
+        // 1. Criar Grelha Vazia
+        function createEmptyGrid() {
+            grid = [];
+            for (let i = 0; i < gridSize; i++) {
+                let row = [];
+                for (let j = 0; j < gridSize; j++) row.push('');
+                grid.push(row);
+            }
+        }
+
+        // 2. Colocar Palavras (Algoritmo de Backtracking Simples)
+        function placeWords() {
+            const directions = [{r: 0, c: 1}, {r: 1, c: 0}, {r: 1, c: 1}];
+            const sortedData = [...gameData].sort((a, b) => b.word.length - a.word.length);
+            
+            for (let item of sortedData) {
+                const word = item.word;
+                let placed = false, attempts = 0;
+                while (!placed && attempts < 100) {
+                    const dir = directions[Math.floor(Math.random() * directions.length)];
+                    const row = Math.floor(Math.random() * gridSize);
+                    const col = Math.floor(Math.random() * gridSize);
+                    if (canPlaceWord(word, row, col, dir)) {
+                        for (let i = 0; i < word.length; i++) grid[row + i*dir.r][col + i*dir.c] = word[i];
+                        placed = true;
+                    }
+                    attempts++;
+                }
+                if (!placed) { 
+                    // Se falhar, tenta gerar tudo de novo
+                    createEmptyGrid(); 
+                    placeWords(); 
+                    return; 
+                }
+            }
+        }
+
+        function canPlaceWord(word, r, c, dir) {
+            if (r + word.length * dir.r > gridSize || c + word.length * dir.c > gridSize) return false;
+            for (let i = 0; i < word.length; i++) {
+                const cell = grid[r + i*dir.r][c + i*dir.c];
+                if (cell !== '' && cell !== word[i]) return false;
+            }
+            return true;
+        }
+
+        // 3. Preencher espaços vazios com letras aleatórias
+        function fillEmptySpaces() {
+            const letters = "ABCDEFGHIJLMNOPQRSTUVXZÁÉÍÓÚÃÕÇ";
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    if (grid[i][j] === '') {
+                        grid[i][j] = letters.charAt(Math.floor(Math.random() * letters.length));
+                    }
+                }
+            }
+        }
+
+        // 4. Renderizar o HTML da Grelha
+        function renderGrid() {
+            gridContainer.innerHTML = '';
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = i; 
+                    cell.dataset.col = j; 
+                    cell.dataset.letter = grid[i][j];
+                    cell.textContent = grid[i][j];
+                    
+                    // Eventos Mouse/Touch
+                    cell.addEventListener('mousedown', startSelection);
+                    cell.addEventListener('mouseenter', updateSelection);
+                    cell.addEventListener('touchstart', handleTouchStart, {passive: false});
+                    cell.addEventListener('touchmove', handleTouchMove, {passive: false});
+                    cell.addEventListener('touchend', endSelection);
+                    
+                    gridContainer.appendChild(cell);
+                }
+            }
+            document.addEventListener('mouseup', endSelection);
+        }
+
+        // 5. Renderizar a Lista de Dicas
+        function renderWordList() {
+            wordListContainer.innerHTML = '';
+            gameData.forEach(item => {
+                const div = document.createElement('div');
+                div.classList.add('word-item');
+                div.textContent = item.hint; // Começa por mostrar a dica
+                div.dataset.word = item.word; // Guarda a resposta
+                wordListContainer.appendChild(div);
+            });
+        }
+
+        // --- Lógica de Seleção (Mouse & Touch) ---
+        function startSelection(e) { isSelecting = true; selectCell(e.target); }
+        function updateSelection(e) { if (isSelecting) selectCell(e.target); }
+        
+        function handleTouchStart(e) {
+            e.preventDefault(); isSelecting = true;
+            const target = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+            if(target && target.classList.contains('cell')) selectCell(target);
+        }
+        
+        function handleTouchMove(e) {
+            e.preventDefault(); if(!isSelecting) return;
+            const target = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+            if(target && target.classList.contains('cell')) {
+                const last = selectedCells[selectedCells.length -1];
+                if (!last || (last.dataset.row !== target.dataset.row || last.dataset.col !== target.dataset.col)) selectCell(target);
+            }
+        }
+
+        function selectCell(cell) {
+            // Se voltar atrás, remove a seleção
+            const index = selectedCells.indexOf(cell);
+            if (index !== -1) {
+                selectedCells.slice(index + 1).forEach(c => c.classList.remove('selected'));
+                selectedCells = selectedCells.slice(0, index + 1); return;
+            }
+            // Verifica adjacência (não permite saltar letras)
+            if (selectedCells.length > 0) {
+                const last = selectedCells[selectedCells.length - 1];
+                const r1 = parseInt(last.dataset.row), c1 = parseInt(last.dataset.col);
+                const r2 = parseInt(cell.dataset.row), c2 = parseInt(cell.dataset.col);
+                if (Math.abs(r1 - r2) > 1 || Math.abs(c1 - c2) > 1) return; 
+            }
+            selectedCells.push(cell); cell.classList.add('selected');
+        }
+
+        function endSelection() {
+            if (!isSelecting) return; isSelecting = false;
+            const selectedWord = selectedCells.map(c => c.dataset.letter).join(''); 
+            checkWord(selectedWord);
+            
+            // Limpa visual da seleção
+            setTimeout(() => { 
+                selectedCells.forEach(c => c.classList.remove('selected')); 
+                selectedCells = []; 
+            }, 200);
+        }
+
+        // 6. Verificar Vitória
+        function checkWord(word) {
+            const reversed = word.split('').reverse().join('');
+            const wordElement = Array.from(document.querySelectorAll('.word-item')).find(el => 
+                !el.classList.contains('found') && (el.dataset.word === word || el.dataset.word === reversed)
+            );
+            
+            if (wordElement) {
+                // Revela a palavra real
+                wordElement.textContent = wordElement.dataset.word; 
+                wordElement.classList.add('found');
+                
+                // Marca na grelha
+                selectedCells.forEach(cell => cell.classList.add('found'));
+                
+                foundWordsCount++;
+                updateProgress();
+            }
+        }
+
+        function updateProgress() {
+            progressCount.textContent = `${foundWordsCount}/${gameData.length}`;
+            progressFill.style.width = `${(foundWordsCount / gameData.length) * 100}%`;
+            if (foundWordsCount === gameData.length) {
+                setTimeout(() => winBox.style.display = 'block', 500);
+            }
+        }
+
+        // Iniciar
+        initGame();
+    </script>
+
+    <script>
+        const container = document.getElementById('ballpit-canvas');
+        const scene = new THREE.Scene();
+        
+        // Cores das Bolas de Natal
+        const colors = [0x8a1c27, 0x2e7d32, 0xd4af37, 0xffffff]; 
+
+        // Configuração da Câmera
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 25;
+
+        // Renderizador
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Iluminação
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, 7);
+        scene.add(dirLight);
+
+        const pointLight = new THREE.PointLight(0xd4af37, 0.5);
+        pointLight.position.set(0, 0, 10);
+        scene.add(pointLight);
+
+        // --- CRIAÇÃO DAS BOLAS ---
+        const ballCount = 100;
+        const balls = [];
+        const ballRadius = 0.8;
+        const geometry = new THREE.SphereGeometry(ballRadius, 32, 32);
+
+        // Limites da área onde as bolas flutuam
+        let bounds = {
+            x: (window.innerWidth / window.innerHeight) * 10,
+            y: 10
+        };
+
+        for (let i = 0; i < ballCount; i++) {
+            const material = new THREE.MeshPhysicalMaterial({
+                color: colors[Math.floor(Math.random() * colors.length)],
+                roughness: 0.1,
+                metalness: 0.1,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.1
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            // Posição inicial aleatória
+            mesh.position.set(
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 5
+            );
+
+            scene.add(mesh);
+
+            balls.push({
+                mesh: mesh,
+                velocity: new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.1,
+                    (Math.random() - 0.5) * 0.1,
+                    0
+                ),
+                radius: ballRadius
+            });
+        }
+
+        // --- INTERAÇÃO COM O RATO ---
+        const mouse = new THREE.Vector2();
+        const raycaster = new THREE.Raycaster();
+        let mouseWorldPos = new THREE.Vector3();
+
+        document.addEventListener('mousemove', (e) => {
+            // Normalizar coordenadas do rato (-1 a +1)
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            // Calcular posição do rato no mundo 3D (Z=0)
+            raycaster.setFromCamera(mouse, camera);
+            const planeZ = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+            raycaster.ray.intersectPlane(planeZ, mouseWorldPos);
+        });
+
+        // Loop de Física Simples
+        function resolveCollisions() {
+            for (let i = 0; i < balls.length; i++) {
+                for (let j = i + 1; j < balls.length; j++) {
+                    const b1 = balls[i];
+                    const b2 = balls[j];
+                    
+                    const distVec = b1.mesh.position.clone().sub(b2.mesh.position);
+                    const dist = distVec.length();
+                    const minDist = b1.radius + b2.radius;
+
+                    // Se colidirem
+                    if (dist < minDist) {
+                        const overlap = minDist - dist;
+                        const normal = distVec.clone().normalize();
+
+                        // 1. Corrigir Posição (evitar sobreposição)
+                        const correction = normal.multiplyScalar(overlap / 2);
+                        b1.mesh.position.add(correction);
+                        b2.mesh.position.sub(correction);
+
+                        // 2. Física de Rebote
+                        const relativeVelocity = b1.velocity.clone().sub(b2.velocity);
+                        const velAlongNormal = relativeVelocity.dot(normal);
+
+                        if (velAlongNormal > 0) continue; // Já estão a afastar-se
+
+                        const restitution = 0.9; // Elasticidade
+                        const jVal = -(1 + restitution) * velAlongNormal;
+                        const impulse = normal.multiplyScalar(jVal / 2); 
+
+                        b1.velocity.add(impulse);
+                        b2.velocity.sub(impulse);
+                    }
+                }
+            }
+        }
+
+        // --- LOOP DE ANIMAÇÃO PRINCIPAL ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Atualizar Limites caso a janela mude de tamanho
+            const aspect = window.innerWidth / window.innerHeight;
+            bounds.x = 12 * aspect;
+            bounds.y = 12;
+
+            balls.forEach(ball => {
+                // 1. Repulsão do Rato
+                const distToMouse = ball.mesh.position.distanceTo(mouseWorldPos);
+                const repulsionRadius = 6;
+                if (distToMouse < repulsionRadius) {
+                    const repulseForce = ball.mesh.position.clone().sub(mouseWorldPos).normalize();
+                    const strength = (1 - distToMouse / repulsionRadius) * 0.05;
+                    ball.velocity.add(repulseForce.multiplyScalar(strength));
+                }
+
+                // 2. Atração Central (Gravidade Zero Simulada)
+                const centerForce = ball.mesh.position.clone().negate().normalize().multiplyScalar(0.00005);
+                ball.velocity.add(centerForce);
+
+                // 3. Atrito do Ar
+                ball.velocity.multiplyScalar(0.99);
+
+                // 4. Mover a bola
+                ball.mesh.position.add(ball.velocity);
+
+                // 5. Colisão com Paredes (Rebote)
+                if (ball.mesh.position.x > bounds.x) {
+                    ball.mesh.position.x = bounds.x;
+                    ball.velocity.x *= -0.8;
+                } else if (ball.mesh.position.x < -bounds.x) {
+                    ball.mesh.position.x = -bounds.x;
+                    ball.velocity.x *= -0.8;
+                }
+
+                if (ball.mesh.position.y > bounds.y) {
+                    ball.mesh.position.y = bounds.y;
+                    ball.velocity.y *= -0.8;
+                } else if (ball.mesh.position.y < -bounds.y) {
+                    ball.mesh.position.y = -bounds.y;
+                    ball.velocity.y *= -0.8;
+                }
+                
+                // Limite Z
+                if (Math.abs(ball.mesh.position.z) > 2) {
+                    ball.velocity.z -= ball.mesh.position.z * 0.01;
+                }
+            });
+
+            resolveCollisions();
+
+            // Rotação suave para dar vida
+            balls.forEach(b => {
+                b.mesh.rotation.x += b.velocity.y * 0.1;
+                b.mesh.rotation.z -= b.velocity.x * 0.1;
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Redimensionar janela
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
 </html>
